@@ -7,14 +7,18 @@ By using the simple-but-powerful YAML syntax for configuration, TeddyPi can easi
 
 ## Dependencies
 TeddyPi runs on Python 2.7. All Python dependencies can be installed using `pip install`.
-- BioPython (http://biopython.org)
-- pybedtools
-- pyVCF
-- python-nexus
-- pyYAML
-- Bedtools (http://bedtools.readthedocs.io/en/latest/)
+Version numbers TeddyPi has been tested with are given in parentheses. 
+- pybedtools (0.7.7)
+- pyVCF (0.6.7)
+- python-nexus (v 1.32)
+- pyYAML (3.11)
+- BioPython (1.66) http://biopython.org
+### Non Python dependency
+- Bedtools (2.26) http://bedtools.readthedocs.io/en/latest/
+
 
 ## Getting started
+
 ### Installation
 When dependencies are installed, TeddyPi can be obtained by cloning this git-repository:
 ```
@@ -24,11 +28,6 @@ TeddyPi assumes that you have already called TEs and deletion from your NGS data
 
 ##  Modules
 
-### teddypi.py
-
-### tpi_ortho.py
-The core functionality in of TeddyPi is to load a set of transposable element variants (TE) from VCF files.
-VCF files have to be created per sample, and are intersected by TeddyPi to create a presence / absence matrix.
 
 ### tpi_filter.py
 Loads VCF files and applies filter operations as defined in YAML-formatted config file.
@@ -37,6 +36,10 @@ Loads VCF files and applies filter operations as defined in YAML-formatted confi
 (former `postprocess_pindel_breakdancer.py`)
 
 This module loads filtered deletion calls files two SV callers and unifies it. Currently it is tailored towards Pindel and Breakdancer, but other SV can be implemented in the future. The module filters out regions with putative bad assembly quality.
+
+### tpi_ortho.py
+The core functionality in of TeddyPi is to load a set of transposable element variants (TE) from VCF files.
+VCF files have to be created per sample, and are intersected by TeddyPi to create a presence / absence matrix.
 
 ### tpi_unite.py
 (former `merged_matrix.py`)
