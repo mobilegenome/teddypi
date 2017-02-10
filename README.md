@@ -13,6 +13,8 @@ Version numbers TeddyPi has been tested with are given in parentheses.
 - python-nexus (v 1.32)
 - pyYAML (3.11)
 - BioPython (1.66) http://biopython.org
+
+
 ### Non Python dependency
 - Bedtools (2.26) http://bedtools.readthedocs.io/en/latest/
 
@@ -35,8 +37,6 @@ To perform a full run, start the `tpi_wrapper.sh` in a BASH shell.
 Loads VCF files and applies filter operations as defined in YAML-formatted config file.
 
 ### tpi_svintegration.py
-(former `postprocess_pindel_breakdancer.py`)
-
 This module loads filtered deletion calls files two SV callers and unifies it. Currently it is tailored towards Pindel and Breakdancer, but other SV can be implemented in the future. The module filters out regions with putative bad assembly quality.
 
 ### tpi_ortho.py
@@ -44,8 +44,6 @@ The core functionality in of TeddyPi is to load a set of transposable element va
 VCF files have to be created per sample, and are intersected by TeddyPi to create a presence / absence matrix.
 
 ### tpi_unite.py
-(former `merged_matrix.py`)
-
 The module `tpi_unite.py` combines presence / absence matrices from Ref+ and Ref- calls to final matrix and generates a NEXUS file that can be utilized by phylogeny-software such as PAUP, SplitsTree4 or others.
 
 ### tpi_helpers.py
