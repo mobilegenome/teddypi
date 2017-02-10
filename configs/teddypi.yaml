@@ -1,0 +1,21 @@
+data_dir: test/
+out_dir: test/output/
+project_name: TPI-DEMO
+programs:
+- name: retroseq
+  rel: nonref
+- name: pindel
+  type: DEL
+- name: breakdancer
+  type: DEL # can be auto?
+samples:
+ - testA
+ - testB
+ - testC
+ - testD
+ortho_merge_distance: 50
+refte: "../../data/reference_genome/UrsMar1.rmsk.SINE.bed"
+call_operations:
+  non_redundant:
+    - pindel
+    - breakdancer

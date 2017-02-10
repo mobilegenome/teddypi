@@ -1,0 +1,26 @@
+name: RetroSeq
+rel: nonref
+type: TE
+filters:
+- name: SINE
+  order: 00
+  method: meinfo_type
+  type: SINE
+- name: IS_HOM
+  level: VCF
+  order: 01
+  method: retroseq_gt_hom
+- name: QUAL
+  level: VCF
+  order: 02
+  method: retroseq_qual
+- name: REFGAPS
+  order: 03
+  method: exclude
+  distance: 200
+  exfile: ../../data/reference_genome/BGI.scaf.gaps.sorted.bed
+- name: REFTEs
+  order: 04
+  method: exclude
+  distance: 100
+  exfile: ../../data/reference_genome/UrsMar1.rmsk.SINE.bed

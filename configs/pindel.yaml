@@ -1,0 +1,30 @@
+name: Pindel
+rel: ref
+type: DEL
+filters:
+- name: IS_HOM
+  level: VCF
+  order: 01
+  method: retroseq_gt_hom
+- name: ISDEL
+  level: VCF
+  order: 02
+  method: svtype
+  type: DEL
+- name: SIZE
+  level: VCF
+  order: 03
+  method: svlen
+  min_size: 100
+  max_size: 10000
+- name: REFGAPS
+  order: 04
+  method: exclude
+  distance: 200
+  exfile: ../../data/reference_genome/BGI.scaf.gaps.sorted.bed
+- name: COVERAGE
+  order: 05
+  method: exclude
+  distance: 0
+  deactivate: False
+  exfile: test/{SAMPLE}.coverage_exclude.bed.lowpass # {SAMPLE} = placeholder for sample name
