@@ -85,6 +85,8 @@ def main(args):
     inverse_flag = ""
 
     config = tpi_helpers.main_config(options.config)
+    tpi_helpers.config = config
+
     projectname = config['project_name']
 
     # Create output path if not exists
@@ -96,15 +98,16 @@ def main(args):
 
     print u"[ {} ] Create Multi-intersection matrix for presence / absence patterns".format("ISECT")
     isect_matrix = get_intersection_matrix(variants)
-    isect_matrix = isect_matrix.sort().merge(d=options.distance, c=5, o="collapse").saveas(
-        os.path.join(config['out_dir'], out_tsv_fname))
+    isect_matrix = isect_matrix.sort().merge(d=config['ortho_merge_distance'], c=5, o="collapse")
+
     print u"[ {} ] The list of sample names is {}".format("ISECT", ",".join(options.names))
     print u"[ {} ] The outgroup is {}".format("ISECT", options.refname)
 
     sample_list = set(options.names) | {options.refname}
-    # 3. If DEL, do 0<>1 conversion
 
     if options.inverse:
+        # 3. If DEL, do 0<>1
+
         inverse_flag = ".inv"
         print u"[ {} ] Performing 0<>1 conversion for Ref+ calls".format("ISECT")
 
@@ -112,18 +115,30 @@ def main(args):
         for line in str(isect_matrix).split("\n"):
             line = line.split("\t")
             if len(line) < 4: continue  # filter empty/ incomplete lines lines
-            inverse_matrix.append(tuple(line[0:3] + [inverse_samples(line[3].split(","), sample_list)]))  #
+            inversed_presence = [",".join({inverse_samples(line[3].split(","), sample_list)})]
+            inverse_matrix.append(tuple(line[0:3] + inversed_presence + ["ref+"]))  #
 
         out_tsv_fname = "{p}.{s}{v}.tsv".format(p=projectname, s=options.suffix, v=inverse_flag)
         print u"[ {} ] Save presence absence data in {}".format("ISECT", os.path.join(config['out_dir'], out_tsv_fname))
         isect_matrix = BedTool(inverse_matrix).saveas(os.path.join(config['out_dir'], out_tsv_fname))
     else:
-        pass
+        matrix = []
+        for line in str(isect_matrix).split("\n"):
+            line = line.split("\t")
+            if len(line) < 4: continue  # filter empty/ incomplete lines lines
+            presence = ",".join(set(line[3].split(",")))
+            matrix.append(tuple(line[0:3] + [presence] + ["ref-"]))  #
+        isect_matrix = BedTool(matrix).saveas(os.path.join(config['out_dir'], out_tsv_fname))
+
+        print u"[ {} ] Save presence absence data in {}".format("ISECT", os.path.join(config['out_dir'], out_tsv_fname))
 
     if options.nexus:
         out_nex_fname = out_tsv_fname = "{p}.{s}{v}.nex".format(p=projectname, s=options.suffix, v=inverse_flag)
         print u"[ {} ] Save NEXUS files {}".format("ISECT", os.path.join(config['out_dir'], out_nex_fname))
-        nex = tpi_helpers.create_nexus(isect_matrix, sample_list)
+        if options.inverse:
+            nex = tpi_helpers.create_nexus(isect_matrix, sample_list)
+        else:
+            nex = tpi_helpers.create_nexus(isect_matrix, sample_list)
         nex.write_to_file(filename=os.path.join(config['out_dir'], out_nex_fname), interleave=True,
                           charblock=True)
     print u"[ {} ] Finished.\n".format("ISECT")

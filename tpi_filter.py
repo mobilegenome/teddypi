@@ -20,6 +20,7 @@ class LoadVCF():
         :param fname  (str) Filename to load
         :param sname  (str) Sample name (identifier)
         """
+        self.skip = True
         self.sample = sname
         self.modulename = "Filter"
         print "[ %s ] Load VCF file %s..." % (self.modulename, fname),
@@ -28,6 +29,7 @@ class LoadVCF():
         self.fname = fname
         self.vcf_obj = vcf.Reader(open(os.path.join(data_dir, fname), "r"))
         self.vcf_template = self.vcf_obj
+
         print "done."
 
         self.vcf_source = str(self.vcf_obj.metadata["source"][0])  # identify creator of VCF file
@@ -79,17 +81,20 @@ class LoadVCF():
         Apply filter method on entries in VCF/BED as defined in class VCFfilter
         """
         self.out_fname = self.fname.replace(".vcf", ".%02d_%s.vcf" % (step_dict['order'], step_dict['name']))
-        try:
-            vcfout_filtered = vcf.VCFWriter(open(os.path.join(self.out_dir, self.out_fname), "w"), self.vcf_template)
-            entries_list = list(
-                getattr(VCFfilters(), step_dict['method'])(entries_list, template=self.vcf_template, sample=self.sample, **step_dict))
+        if not self.skip:
+            try:
+                vcfout_filtered = vcf.VCFWriter(open(os.path.join(self.out_dir, self.out_fname), "w"), self.vcf_template)
+                entries_list = list(
+                    getattr(VCFfilters(), step_dict['method'])(entries_list, template=self.vcf_template, sample=self.sample, **step_dict))
 
-            for record in entries_list:
-                vcfout_filtered.write_record(record)
-            vcfout_filtered.close()
-        except AttributeError:
-            print u"[Error] Method %s not defined." % step_dict['method']
-            raise
+                for record in entries_list:
+                    vcfout_filtered.write_record(record)
+                vcfout_filtered.close()
+            except AttributeError:
+                print u"[Error] Method %s not defined." % step_dict['method']
+                raise
+        else:
+            pass
         return entries_list
 
     def filter_variants(self):
@@ -124,8 +129,8 @@ class VCFfilters():
         :return:
         """
         # create temporary VCF files
-        vcf_temp_in = tempfile.NamedTemporaryFile()  # write IN-VCF to disk temporarily
-        vcf_temp_out = tempfile.NamedTemporaryFile()  # write OUT-VCF to disk temporarily
+        vcf_temp_in = tempfile.NamedTemporaryFile(suffix=".vcf")  # write IN-VCF to disk temporarily
+        vcf_temp_out = tempfile.NamedTemporaryFile(suffix=".vcf")  # write OUT-VCF to disk temporarily
         vcfin = vcf.VCFWriter(vcf_temp_in, kwargs["template"])
         vcfout = vcf.VCFWriter(vcf_temp_out, kwargs["template"])
 
@@ -149,24 +154,39 @@ class VCFfilters():
 
     @staticmethod
     def svtype(entries, type, **kwargs):
-        passed = [record for record in entries if record.INFO["SVTYPE"] == type]
+        if "," in type:
+            types = type.split(",")
+            passed = [record for record in entries if record.INFO["SVTYPE"] in types]
+        else:
+            passed = [record for record in entries if record.INFO["SVTYPE"] == type]
         return passed
 
     @staticmethod
     def meinfo_type(entries, type, **kwargs):
-        passed = [record for record in entries if record.INFO["MEINFO"][0] == type]
+        if "," in type:
+            types = type.split(",")
+            passed = [record for record in entries if record.INFO["MEINFO"][0][:4] in types]
+        else:
+
+            passed = [record for record in entries if type[:4] == record.INFO["MEINFO"][0][:4]]
         return passed
 
     @staticmethod
     def svlen(entries, min_size=0, max_size=10000, **kwargs):
-        passed = [record for record in entries if
-                  abs(record.INFO["SVLEN"]) >= min_size and abs(record.INFO["SVLEN"]) <= max_size]
+        if type(entries[0].INFO["SVLEN"]) == list: # for lumpy record[INFO is list
+            passed = [record for record in entries if
+                      abs(record.INFO["SVLEN"][0]) >= min_size and abs(record.INFO["SVLEN"][0]) <= max_size]
+        elif type(entries[0].INFO["SVLEN"]) == int:
+            passed = [record for record in entries if
+                      abs(record.INFO["SVLEN"]) >= min_size and abs(record.INFO["SVLEN"]) <= max_size]
+        else:
+            passed = []
         return passed
 
 
 def main(args):
    # inputvcf = LoadVCF("test/testB_retroseq.vcf")
-    inputvcf = LoadVCF("test/", "test/output/", "testC_pindel.vcf", "testC")
+    inputvcf = LoadVCF("test/", "test/output/", "testC_mobster.fix.vcf", "testC")
     inputvcf.filter_variants()
 
 #    inputvcf = LoadVCF("test/", "testC_breakdancer.vcf", "testC")

@@ -7,6 +7,7 @@ import vcf
 import tempfile
 
 modulename = ""
+config = ""
 
 def create_out_path(dirname):
     if not os.path.exists(os.path.dirname(dirname)):
@@ -29,6 +30,7 @@ def main_config(fname):
 
 def count(iter): # count elements in generator
     return sum(1 for _ in iter)
+
 
 def make_BED_fromVCF(fname, breakpoint=False):
     """
@@ -64,11 +66,12 @@ def make_BED_fromVCF(fname, breakpoint=False):
     fin.close()
     return bt_list
 
-def create_nexus(bt_matrix, sample_list):
+def create_nexus(bt_matrix, sample_list, absence_code = 0, has_missing = False):
     '''
     create NexusWriter object from BedTool matrix
     BedTool object apparently can contain empty lines, a simple length-check skips these
 
+    :param has_missing indicate whether input BED file should be parsed for uncertainly called loci, that will be coded as "?"
     requires pybedtools, nexus
     '''
     from nexus import NexusWriter
@@ -79,6 +82,9 @@ def create_nexus(bt_matrix, sample_list):
     #     matrix_lines = str(bt_matrix).split("\n")
     matrix_lines = str(bt_matrix).split("\n")
     current_chrom = ""
+    if has_missing:
+        print u"[ {} ] adding missing characters".format(modulename)
+
     for line in matrix_lines:
         line = line.split("\t")
 
@@ -87,19 +93,39 @@ def create_nexus(bt_matrix, sample_list):
             print u"skipping incomplete or empty line:  %s" % ",".join(line)
             continue
 
-        chrom, start, end, samples_present = line[0], line[1], line[2], line[3].split(
-            ",")  # create locus and present_sample objects
-        locus = "%s_%i_%i" % (chrom, int(start), int(end))  # define locus
+        if not has_missing:
 
-        if current_chrom != chrom:
-            print u"[ {} ] Operating on".format(modulename),
-            print chrom
-            current_chrom = chrom
+            chrom, start, end, samples_present = line[0], line[1], line[2], line[3].split(
+                ",")  # create locus and present_sample objects
+            locus = "%s_%i_%i" % (chrom, int(start), int(end))  # define locus
 
+            if current_chrom != chrom:
+                print u"[ {} ] Operating on".format(modulename),
+                print chrom
+                current_chrom = chrom
+            # add locus to nexus object
+            for taxon in sample_list:  # iterate over taxons
+                char = 1 if taxon in samples_present else absence_code
+                n.add(taxon, locus, char)
 
-        # add locus to nexus object
-        for taxon in sample_list:  # iterate over taxons
-            presence = 1 if taxon in samples_present else 0
-            n.add(taxon, locus, presence)
+        elif has_missing:
+            chrom, start, end, samples_present, type, samples_missing = line[0], line[1], line[2], line[3].split(
+                ","), line[4], line[5].split(",")  # create locus and present_sample objects
+            locus = "%s_%i_%i" % (chrom, int(start), int(end))  # define locus
+
+            if current_chrom != chrom:
+                print u"[ {} ] Operating on".format(modulename),
+                print chrom
+                current_chrom = chrom
+
+            # add locus to nexus object
+            for taxon in sample_list:  # iterate over taxons
+                if taxon in samples_present:
+                    char = 1
+                elif taxon in samples_missing:
+                    char = "?"
+                else:
+                    char = absence_code
+                n.add(taxon, locus, char)
 
     return n
