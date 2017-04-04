@@ -56,6 +56,7 @@ def main(args):
     tpi_helpers.create_out_path(config['out_dir'])
 
     # Load and concatenate input files
+    for fname in options.input:
         with open(fname) as fin:
             fcontents = fcontents + fin.read().strip() + "\n"
     print u"[ {} ]".format(tpi_helpers.modulename),
