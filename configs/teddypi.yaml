@@ -14,7 +14,7 @@ samples:
  - testC
  - testD
 ortho_merge_distance: 50
-refte: "../../data/reference_genome/UrsMar1.rmsk.SINE.bed"
+refte: "../../teddypi_data/reference_genome/UrsMar1.rmsk.SINE.bed"
 call_operations:
   non_redundant:
     - pindel
